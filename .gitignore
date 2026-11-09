@@ -1,1 +1,6 @@
-
+/target
+/dist
+settings.json
+settings.json.tmp
+*.pdb
+*.dSYM/

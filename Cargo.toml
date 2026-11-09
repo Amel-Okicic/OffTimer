@@ -1,0 +1,23 @@
+[package]
+name = "offtimer"
+version = "1.0.0"
+edition = "2024"
+description = "A responsive Windows timer for shutdown, sleep, sign out, and restart."
+authors = ["Amel Okicic"]
+repository = "https://github.com/Amel-Okicic/OffTimer"
+homepage = "https://github.com/Amel-Okicic/OffTimer"
+
+[dependencies]
+eframe = { version = "0.37.0", default-features = false, features = ["default_fonts", "glow", "clipboard", "links"] }
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+
+[build-dependencies]
+ico = "0.6.0"
+resvg = "0.48.1"
+
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1.12"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_Security", "Win32_System_LibraryLoader", "Win32_System_Shutdown", "Win32_System_SystemInformation", "Win32_System_Threading", "Win32_System_WindowsProgramming", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging"] }
+tray-icon = "0.26.1"

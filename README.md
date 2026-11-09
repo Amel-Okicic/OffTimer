@@ -399,6 +399,16 @@ OffTimer/
 ```
 
 ## About
+Lightweight Windows app for scheduling shutdown, sleep, sign-out, and restart.
+
+- `OffTimer-v1.0.0-windows-x64.zip`: extract and run `offtimer.exe`. No installer needed.
+
+### Windows SmartScreen warning
+This app is not code-signed, so Windows may show **"Windows protected your PC"** the first time you run it. This is normal for new, unsigned apps.
+
+To run it:
+1. Click **More info**.
+2. Click **Run anyway**.
 
 OffTimer is designed to provide a straightforward way to schedule common Windows power actions without unnecessary configuration or background services.
 **Author:** [Amel Okicic](https://github.com/Amel-Okicic)

@@ -28,6 +28,8 @@ OffTimer uses native Windows system APIs to perform power actions. It does not r
   </tr>
 </table>
 
+## Download the latest version from the [Releases page](https://github.com/Amel-Okicic/OffTimer/releases/latest).
+
 ## Features
 
 - Four built-in quick presets with independent customization.
@@ -413,4 +415,6 @@ To run it:
 OffTimer is designed to provide a straightforward way to schedule common Windows power actions without unnecessary configuration or background services.
 **Author:** [Amel Okicic](https://github.com/Amel-Okicic)
 
-**Version:** Displayed dynamically in the About OffTimer dialog.
+## Download 
+Get the latest version from the [Releases page](https://github.com/Amel-Okicic/OffTimer/releases/latest).
+

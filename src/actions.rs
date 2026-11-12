@@ -1,3 +1,5 @@
+#![allow(clippy::field_reassign_with_default)]
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PowerAction {
     Shutdown,
@@ -59,34 +61,33 @@ mod windows {
 
     use windows_sys::Win32::{
         Foundation::{
-            CloseHandle, GetLastError, LUID, SetLastError, HANDLE, HWND, ERROR_ALREADY_EXISTS,
+            CloseHandle, ERROR_ALREADY_EXISTS, GetLastError, HANDLE, HWND, LUID, SetLastError,
         },
         Security::{
-            AdjustTokenPrivileges, LookupPrivilegeValueW, LUID_AND_ATTRIBUTES,
+            AdjustTokenPrivileges, LUID_AND_ATTRIBUTES, LookupPrivilegeValueW,
             SE_PRIVILEGE_ENABLED, TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES, TOKEN_QUERY,
         },
         System::{
             LibraryLoader::GetModuleHandleW,
             Shutdown::{
-                AbortSystemShutdownW, InitiateSystemShutdownExW,
-                SHTDN_REASON_FLAG_PLANNED, SHTDN_REASON_MAJOR_APPLICATION,
-                SHTDN_REASON_MINOR_MAINTENANCE,
+                AbortSystemShutdownW, InitiateSystemShutdownExW, SHTDN_REASON_FLAG_PLANNED,
+                SHTDN_REASON_MAJOR_APPLICATION, SHTDN_REASON_MINOR_MAINTENANCE,
             },
             SystemInformation::GetTickCount64,
             Threading::{
                 CreateMutexW, GetCurrentProcess, GetCurrentProcessId, OpenProcess,
-                OpenProcessToken, QueryFullProcessImageNameW, PROCESS_QUERY_LIMITED_INFORMATION,
+                OpenProcessToken, PROCESS_QUERY_LIMITED_INFORMATION, QueryFullProcessImageNameW,
             },
             WindowsProgramming::QueryUnbiasedInterruptTime,
         },
         UI::{
             Shell::{
-                Shell_NotifyIconW, NOTIFYICONDATAW, NIF_ICON, NIF_INFO, NIF_TIP,
-                NIIF_INFO, NIM_ADD, NIM_DELETE, NIM_MODIFY,
+                NIF_ICON, NIF_INFO, NIF_TIP, NIIF_INFO, NIM_ADD, NIM_DELETE, NIM_MODIFY,
+                NOTIFYICONDATAW, Shell_NotifyIconW,
             },
             WindowsAndMessaging::{
-                FindWindowExW, GetWindowThreadProcessId, LoadIconW, MessageBoxW,
-                SetForegroundWindow, ShowWindow, MB_ICONERROR, MB_OK, SW_HIDE, SW_RESTORE,
+                FindWindowExW, GetWindowThreadProcessId, LoadIconW, MB_ICONERROR, MB_OK,
+                MessageBoxW, SW_HIDE, SW_RESTORE, SetForegroundWindow, ShowWindow,
             },
         },
     };
@@ -116,7 +117,9 @@ mod windows {
             SetLastError(0);
             let handle = CreateMutexW(ptr::null(), 0, name.as_ptr());
             if handle.is_null() {
-                return Err(last_error("Could not create the OffTimer single-instance lock"));
+                return Err(last_error(
+                    "Could not create the OffTimer single-instance lock",
+                ));
             }
 
             if GetLastError() == ERROR_ALREADY_EXISTS {
@@ -137,16 +140,14 @@ mod windows {
             return false;
         }
 
-        let Some(expected_executable) = std::env::current_exe()
-            .ok()
-            .and_then(|path| path.file_name().map(|name| name.to_string_lossy().into_owned()))
-        else {
+        let Some(expected_executable) = std::env::current_exe().ok().and_then(|path| {
+            path.file_name()
+                .map(|name| name.to_string_lossy().into_owned())
+        }) else {
             return false;
         };
 
-        let process = unsafe {
-            OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, process_id)
-        };
+        let process = unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, process_id) };
         if process.is_null() {
             return false;
         }
@@ -154,12 +155,7 @@ mod windows {
         let mut image_path = vec![0u16; 32_768];
         let mut image_path_length = image_path.len() as u32;
         let succeeded = unsafe {
-            QueryFullProcessImageNameW(
-                process,
-                0,
-                image_path.as_mut_ptr(),
-                &mut image_path_length,
-            )
+            QueryFullProcessImageNameW(process, 0, image_path.as_mut_ptr(), &mut image_path_length)
         };
         unsafe {
             CloseHandle(process);
@@ -242,9 +238,7 @@ mod windows {
         format!("{context}: {}", std::io::Error::last_os_error())
     }
 
-    fn with_shutdown_privilege<T>(
-        action: impl FnOnce() -> Result<T, String>,
-    ) -> Result<T, String> {
+    fn with_shutdown_privilege<T>(action: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
         unsafe {
             let mut raw_token: HANDLE = ptr::null_mut();
             let access = TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY;
@@ -271,7 +265,9 @@ mod windows {
                 &mut privileges.Privileges[0].Luid,
             ) == 0
             {
-                return Err(last_error("Could not locate the Windows shutdown privilege"));
+                return Err(last_error(
+                    "Could not locate the Windows shutdown privilege",
+                ));
             }
 
             let mut previous = TOKEN_PRIVILEGES::default();
@@ -286,14 +282,15 @@ mod windows {
                 &mut previous_length,
             ) == 0
             {
-                return Err(last_error("Could not enable the Windows shutdown privilege"));
+                return Err(last_error(
+                    "Could not enable the Windows shutdown privilege",
+                ));
             }
 
             let adjustment_error = GetLastError();
             if adjustment_error == ERROR_NOT_ALL_ASSIGNED {
                 return Err(
-                    "This Windows account is not permitted to shut down this computer."
-                        .to_owned(),
+                    "This Windows account is not permitted to shut down this computer.".to_owned(),
                 );
             }
             if adjustment_error != 0 {
@@ -305,14 +302,8 @@ mod windows {
             let result = action();
 
             // Restore the token's original privilege state after the API call.
-            let _ = AdjustTokenPrivileges(
-                token.0,
-                0,
-                &previous,
-                0,
-                ptr::null_mut(),
-                ptr::null_mut(),
-            );
+            let _ =
+                AdjustTokenPrivileges(token.0, 0, &previous, 0, ptr::null_mut(), ptr::null_mut());
 
             result
         }
@@ -409,14 +400,21 @@ mod windows {
 
     fn copy_wide<const N: usize>(target: &mut [u16; N], text: &str) {
         target.fill(0);
-        for (slot, unit) in target.iter_mut().take(N.saturating_sub(1)).zip(text.encode_utf16()) {
+        for (slot, unit) in target
+            .iter_mut()
+            .take(N.saturating_sub(1))
+            .zip(text.encode_utf16())
+        {
             *slot = unit;
         }
     }
 
-    pub fn show_tray_notification(action: PowerAction, remaining_seconds: u64) -> Result<(), String> {
+    pub fn show_tray_notification(
+        action: PowerAction,
+        remaining_seconds: u64,
+    ) -> Result<(), String> {
         let hwnd = find_offtimer_window()? as windows_sys::Win32::Foundation::HWND;
-        let (action_name, message) = match action {
+        let (action_name, _message) = match action {
             PowerAction::Sleep => ("Sleep", "Sleep"),
             PowerAction::SignOut => ("Sign out", "Sign out"),
             _ => return Err("Tray notifications are only used for sleep and sign out.".to_owned()),
@@ -436,9 +434,11 @@ mod windows {
         if module.is_null() {
             return Err(last_error("Could not access the OffTimer executable icon"));
         }
-        let icon = unsafe { LoadIconW(module, 1usize as *const u16) };
+        let icon = unsafe { LoadIconW(module, std::ptr::dangling::<u16>()) };
         if icon.is_null() {
-            return Err(last_error("Could not load the OffTimer logo for its notification"));
+            return Err(last_error(
+                "Could not load the OffTimer logo for its notification",
+            ));
         }
 
         let mut data = NOTIFYICONDATAW::default();
@@ -451,9 +451,9 @@ mod windows {
 
         unsafe {
             // Remove a stale icon from a previous interrupted run, if one exists.
-            let _ = Shell_NotifyIconW(NIM_DELETE, &mut data);
+            let _ = Shell_NotifyIconW(NIM_DELETE, &data);
 
-            if Shell_NotifyIconW(NIM_ADD, &mut data) == 0 {
+            if Shell_NotifyIconW(NIM_ADD, &data) == 0 {
                 return Err(last_error("Windows could not add the OffTimer tray icon"));
             }
 
@@ -463,9 +463,11 @@ mod windows {
             copy_wide(&mut data.szInfoTitle, "OffTimer");
             copy_wide(&mut data.szInfo, &body);
 
-            if Shell_NotifyIconW(NIM_MODIFY, &mut data) == 0 {
-                let _ = Shell_NotifyIconW(NIM_DELETE, &mut data);
-                return Err(last_error("Windows could not display the OffTimer tray notification"));
+            if Shell_NotifyIconW(NIM_MODIFY, &data) == 0 {
+                let _ = Shell_NotifyIconW(NIM_DELETE, &data);
+                return Err(last_error(
+                    "Windows could not display the OffTimer tray notification",
+                ));
             }
         }
 
@@ -483,7 +485,7 @@ mod windows {
         data.uID = TRAY_ICON_ID;
 
         unsafe {
-            let _ = Shell_NotifyIconW(NIM_DELETE, &mut data);
+            let _ = Shell_NotifyIconW(NIM_DELETE, &data);
         }
     }
 }
@@ -577,11 +579,8 @@ pub fn execute(action: PowerAction) -> Result<(), String> {
         PowerAction::Sleep => {
             #[link(name = "PowrProf")]
             unsafe extern "system" {
-                fn SetSuspendState(
-                    hibernate: u8,
-                    force_critical: u8,
-                    disable_wake_event: u8,
-                ) -> u8;
+                fn SetSuspendState(hibernate: u8, force_critical: u8, disable_wake_event: u8)
+                -> u8;
             }
 
             // Request sleep rather than hibernation; do not force the request.
@@ -600,7 +599,6 @@ pub fn execute(_action: PowerAction) -> Result<(), String> {
     Err("OffTimer power actions are available on Windows only.".to_owned())
 }
 
-
 #[cfg(test)]
 mod power_clock_tests {
     use super::PowerClockSnapshot;
@@ -617,10 +615,7 @@ mod power_clock_tests {
             awake_time_100ns: 510_000_000,
         };
 
-        assert_eq!(
-            after.sleep_duration_since(before),
-            Duration::from_secs(29)
-        );
+        assert_eq!(after.sleep_duration_since(before), Duration::from_secs(29));
     }
 
     #[test]
@@ -634,10 +629,7 @@ mod power_clock_tests {
             awake_time_100ns: 520_000_000,
         };
 
-        assert_eq!(
-            after.sleep_duration_since(before),
-            Duration::ZERO
-        );
+        assert_eq!(after.sleep_duration_since(before), Duration::ZERO);
     }
 
     #[test]
@@ -651,9 +643,6 @@ mod power_clock_tests {
             awake_time_100ns: 500_200_000,
         };
 
-        assert_eq!(
-            after.sleep_duration_since(before),
-            Duration::ZERO
-        );
+        assert_eq!(after.sleep_duration_since(before), Duration::ZERO);
     }
 }

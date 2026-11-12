@@ -8,14 +8,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed={}", svg_path.display());
 
     let svg_data = fs::read(&svg_path)?;
-    let tree = resvg::usvg::Tree::from_data(
-        &svg_data,
-        &resvg::usvg::Options::default(),
-    )?;
+    let tree = resvg::usvg::Tree::from_data(&svg_data, &resvg::usvg::Options::default())?;
 
-    let out_dir = PathBuf::from(
-        env::var_os("OUT_DIR").ok_or("Cargo did not provide OUT_DIR")?,
-    );
+    let out_dir = PathBuf::from(env::var_os("OUT_DIR").ok_or("Cargo did not provide OUT_DIR")?);
     let source_size = tree.size();
     let scale_base = source_size.width().max(source_size.height());
 

@@ -1,31 +1,58 @@
+#![allow(clippy::field_reassign_with_default)]
+#![allow(deprecated)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod actions;
 mod settings;
 
 use actions::PowerAction;
-use settings::AppSettings;
 use chrono::Local;
 use eframe::egui;
+use settings::AppSettings;
 use std::time::{Duration, Instant};
 
 #[derive(Clone, Copy)]
 struct ThemePalette {
-    main_background: egui::Color32, surface_background: egui::Color32, contrast_background: egui::Color32,
-    secondary_text: egui::Color32, accent: egui::Color32, control_background: egui::Color32,
-    primary_text: egui::Color32, selection_background: egui::Color32, error_text: egui::Color32,
-    button_hover_background: egui::Color32, button_active_background: egui::Color32,
-    button_text: egui::Color32, button_hover_text: egui::Color32, button_active_text: egui::Color32,
-    card_border: egui::Stroke, control_border: Option<egui::Stroke>, hover_border: Option<egui::Stroke>,
-    window_border: Option<egui::Stroke>, button_corner_radius: Option<egui::CornerRadius>,
-    card_corner_radius: egui::CornerRadius, use_dark_visuals: bool,
+    main_background: egui::Color32,
+    surface_background: egui::Color32,
+    contrast_background: egui::Color32,
+    secondary_text: egui::Color32,
+    accent: egui::Color32,
+    control_background: egui::Color32,
+    primary_text: egui::Color32,
+    selection_background: egui::Color32,
+    error_text: egui::Color32,
+    button_hover_background: egui::Color32,
+    button_active_background: egui::Color32,
+    button_text: egui::Color32,
+    button_hover_text: egui::Color32,
+    button_active_text: egui::Color32,
+    card_border: egui::Stroke,
+    control_border: Option<egui::Stroke>,
+    hover_border: Option<egui::Stroke>,
+    window_border: Option<egui::Stroke>,
+    button_corner_radius: Option<egui::CornerRadius>,
+    card_corner_radius: egui::CornerRadius,
+    use_dark_visuals: bool,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Theme { Default, Midnight, Light, RedMoon, WindowsClassic }
+enum Theme {
+    Default,
+    Midnight,
+    Light,
+    RedMoon,
+    WindowsClassic,
+}
 
 impl Theme {
-    const ALL: [Self; 5] = [Self::Default, Self::Midnight, Self::Light, Self::RedMoon, Self::WindowsClassic];
+    const ALL: [Self; 5] = [
+        Self::Default,
+        Self::Midnight,
+        Self::Light,
+        Self::RedMoon,
+        Self::WindowsClassic,
+    ];
 
     fn label(self) -> &'static str {
         match self {
@@ -62,55 +89,157 @@ impl Theme {
         match self {
             Self::Default => ThemePalette {
                 // Preserve the original DEFAULT colors and widget treatment.
-                main_background: egui::Color32::from_rgb(0x00, 0x00, 0x00), surface_background: egui::Color32::from_rgb(0x47, 0x47, 0x47), contrast_background: egui::Color32::from_rgb(0x00, 0x00, 0x00),
-                secondary_text: egui::Color32::from_rgb(0x87, 0x87, 0x87), accent: egui::Color32::from_rgb(0xf5, 0xf5, 0xf5), control_background: egui::Color32::from_rgb(0xb5, 0xb5, 0xb5),
-                primary_text: egui::Color32::from_rgb(0xff, 0xff, 0xff), selection_background: egui::Color32::from_rgb(0x21, 0x21, 0x21), error_text: egui::Color32::from_rgb(0xff, 0x8b, 0x8b),
-                button_hover_background: egui::Color32::from_rgb(0xf5, 0xf5, 0xf5), button_active_background: egui::Color32::from_rgb(0xff, 0xff, 0xff),
-                button_text: egui::Color32::from_rgb(0x00, 0x00, 0x00), button_hover_text: egui::Color32::from_rgb(0x00, 0x00, 0x00), button_active_text: egui::Color32::from_rgb(0x00, 0x00, 0x00),
-                card_border: egui::Stroke::new(0.0, egui::Color32::TRANSPARENT), control_border: None, hover_border: None, window_border: None,
-                button_corner_radius: None, card_corner_radius: egui::CornerRadius::same(12), use_dark_visuals: true,
+                main_background: egui::Color32::from_rgb(0x00, 0x00, 0x00),
+                surface_background: egui::Color32::from_rgb(0x47, 0x47, 0x47),
+                contrast_background: egui::Color32::from_rgb(0x00, 0x00, 0x00),
+                secondary_text: egui::Color32::from_rgb(0x87, 0x87, 0x87),
+                accent: egui::Color32::from_rgb(0xf5, 0xf5, 0xf5),
+                control_background: egui::Color32::from_rgb(0xb5, 0xb5, 0xb5),
+                primary_text: egui::Color32::from_rgb(0xff, 0xff, 0xff),
+                selection_background: egui::Color32::from_rgb(0x21, 0x21, 0x21),
+                error_text: egui::Color32::from_rgb(0xff, 0x8b, 0x8b),
+                button_hover_background: egui::Color32::from_rgb(0xf5, 0xf5, 0xf5),
+                button_active_background: egui::Color32::from_rgb(0xff, 0xff, 0xff),
+                button_text: egui::Color32::from_rgb(0x00, 0x00, 0x00),
+                button_hover_text: egui::Color32::from_rgb(0x00, 0x00, 0x00),
+                button_active_text: egui::Color32::from_rgb(0x00, 0x00, 0x00),
+                card_border: egui::Stroke::new(0.0, egui::Color32::TRANSPARENT),
+                control_border: None,
+                hover_border: None,
+                window_border: None,
+                button_corner_radius: None,
+                card_corner_radius: egui::CornerRadius::same(12),
+                use_dark_visuals: true,
             },
             Self::Midnight => ThemePalette {
-                main_background: egui::Color32::from_rgb(0x0b, 0x0f, 0x14), surface_background: egui::Color32::from_rgb(0x15, 0x1c, 0x25), contrast_background: egui::Color32::from_rgb(0x08, 0x0b, 0x10),
-                secondary_text: egui::Color32::from_rgb(0x96, 0xa3, 0xb5), accent: egui::Color32::from_rgb(0x6e, 0xa8, 0xe8), control_background: egui::Color32::from_rgb(0x26, 0x33, 0x43),
-                primary_text: egui::Color32::from_rgb(0xea, 0xf1, 0xfa), selection_background: egui::Color32::from_rgb(0x25, 0x49, 0x6f), error_text: egui::Color32::from_rgb(0xff, 0x85, 0x85),
-                button_hover_background: egui::Color32::from_rgb(0x33, 0x46, 0x5c), button_active_background: egui::Color32::from_rgb(0x20, 0x32, 0x47),
-                button_text: egui::Color32::from_rgb(0xea, 0xf1, 0xfa), button_hover_text: egui::Color32::from_rgb(0xf5, 0xf9, 0xff), button_active_text: egui::Color32::from_rgb(0xf5, 0xf9, 0xff),
-                card_border: egui::Stroke::new(1.0, egui::Color32::from_rgb(0x2c, 0x39, 0x48)), control_border: Some(egui::Stroke::new(1.0, egui::Color32::from_rgb(0x42, 0x54, 0x6a))), hover_border: Some(egui::Stroke::new(1.0, egui::Color32::from_rgb(0x6e, 0xa8, 0xe8))),
-                window_border: Some(egui::Stroke::new(1.0, egui::Color32::from_rgb(0x2c, 0x39, 0x48))), button_corner_radius: Some(egui::CornerRadius::same(8)),
-                card_corner_radius: egui::CornerRadius::same(12), use_dark_visuals: true,
+                main_background: egui::Color32::from_rgb(0x0b, 0x0f, 0x14),
+                surface_background: egui::Color32::from_rgb(0x15, 0x1c, 0x25),
+                contrast_background: egui::Color32::from_rgb(0x08, 0x0b, 0x10),
+                secondary_text: egui::Color32::from_rgb(0x96, 0xa3, 0xb5),
+                accent: egui::Color32::from_rgb(0x6e, 0xa8, 0xe8),
+                control_background: egui::Color32::from_rgb(0x26, 0x33, 0x43),
+                primary_text: egui::Color32::from_rgb(0xea, 0xf1, 0xfa),
+                selection_background: egui::Color32::from_rgb(0x25, 0x49, 0x6f),
+                error_text: egui::Color32::from_rgb(0xff, 0x85, 0x85),
+                button_hover_background: egui::Color32::from_rgb(0x33, 0x46, 0x5c),
+                button_active_background: egui::Color32::from_rgb(0x20, 0x32, 0x47),
+                button_text: egui::Color32::from_rgb(0xea, 0xf1, 0xfa),
+                button_hover_text: egui::Color32::from_rgb(0xf5, 0xf9, 0xff),
+                button_active_text: egui::Color32::from_rgb(0xf5, 0xf9, 0xff),
+                card_border: egui::Stroke::new(1.0, egui::Color32::from_rgb(0x2c, 0x39, 0x48)),
+                control_border: Some(egui::Stroke::new(
+                    1.0,
+                    egui::Color32::from_rgb(0x42, 0x54, 0x6a),
+                )),
+                hover_border: Some(egui::Stroke::new(
+                    1.0,
+                    egui::Color32::from_rgb(0x6e, 0xa8, 0xe8),
+                )),
+                window_border: Some(egui::Stroke::new(
+                    1.0,
+                    egui::Color32::from_rgb(0x2c, 0x39, 0x48),
+                )),
+                button_corner_radius: Some(egui::CornerRadius::same(8)),
+                card_corner_radius: egui::CornerRadius::same(12),
+                use_dark_visuals: true,
             },
             Self::Light => ThemePalette {
-                main_background: egui::Color32::from_rgb(0xf3, 0xf5, 0xf8), surface_background: egui::Color32::from_rgb(0xff, 0xff, 0xff), contrast_background: egui::Color32::from_rgb(0xe8, 0xed, 0xf4),
-                secondary_text: egui::Color32::from_rgb(0x63, 0x70, 0x83), accent: egui::Color32::from_rgb(0x25, 0x63, 0xeb), control_background: egui::Color32::from_rgb(0xe8, 0xee, 0xf6),
-                primary_text: egui::Color32::from_rgb(0x17, 0x23, 0x38), selection_background: egui::Color32::from_rgb(0xdc, 0xe9, 0xff), error_text: egui::Color32::from_rgb(0xb4, 0x23, 0x18),
-                button_hover_background: egui::Color32::from_rgb(0xd9, 0xe7, 0xff), button_active_background: egui::Color32::from_rgb(0xc2, 0xd8, 0xff),
-                button_text: egui::Color32::from_rgb(0x17, 0x23, 0x38), button_hover_text: egui::Color32::from_rgb(0x15, 0x3a, 0x78), button_active_text: egui::Color32::from_rgb(0x15, 0x3a, 0x78),
-                card_border: egui::Stroke::new(1.0, egui::Color32::from_rgb(0xd7, 0xdf, 0xe9)), control_border: Some(egui::Stroke::new(1.0, egui::Color32::from_rgb(0xa9, 0xbb, 0xd4))), hover_border: Some(egui::Stroke::new(1.0, egui::Color32::from_rgb(0x25, 0x63, 0xeb))),
-                window_border: Some(egui::Stroke::new(1.0, egui::Color32::from_rgb(0xd0, 0xd9, 0xe5))), button_corner_radius: Some(egui::CornerRadius::same(8)),
-                card_corner_radius: egui::CornerRadius::same(12), use_dark_visuals: false,
+                main_background: egui::Color32::from_rgb(0xf3, 0xf5, 0xf8),
+                surface_background: egui::Color32::from_rgb(0xff, 0xff, 0xff),
+                contrast_background: egui::Color32::from_rgb(0xe8, 0xed, 0xf4),
+                secondary_text: egui::Color32::from_rgb(0x63, 0x70, 0x83),
+                accent: egui::Color32::from_rgb(0x25, 0x63, 0xeb),
+                control_background: egui::Color32::from_rgb(0xe8, 0xee, 0xf6),
+                primary_text: egui::Color32::from_rgb(0x17, 0x23, 0x38),
+                selection_background: egui::Color32::from_rgb(0xdc, 0xe9, 0xff),
+                error_text: egui::Color32::from_rgb(0xb4, 0x23, 0x18),
+                button_hover_background: egui::Color32::from_rgb(0xd9, 0xe7, 0xff),
+                button_active_background: egui::Color32::from_rgb(0xc2, 0xd8, 0xff),
+                button_text: egui::Color32::from_rgb(0x17, 0x23, 0x38),
+                button_hover_text: egui::Color32::from_rgb(0x15, 0x3a, 0x78),
+                button_active_text: egui::Color32::from_rgb(0x15, 0x3a, 0x78),
+                card_border: egui::Stroke::new(1.0, egui::Color32::from_rgb(0xd7, 0xdf, 0xe9)),
+                control_border: Some(egui::Stroke::new(
+                    1.0,
+                    egui::Color32::from_rgb(0xa9, 0xbb, 0xd4),
+                )),
+                hover_border: Some(egui::Stroke::new(
+                    1.0,
+                    egui::Color32::from_rgb(0x25, 0x63, 0xeb),
+                )),
+                window_border: Some(egui::Stroke::new(
+                    1.0,
+                    egui::Color32::from_rgb(0xd0, 0xd9, 0xe5),
+                )),
+                button_corner_radius: Some(egui::CornerRadius::same(8)),
+                card_corner_radius: egui::CornerRadius::same(12),
+                use_dark_visuals: false,
             },
             Self::RedMoon => ThemePalette {
                 // Deep charcoal and burgundy surfaces with a vivid red-moon accent.
-                main_background: egui::Color32::from_rgb(0x12, 0x0c, 0x11), surface_background: egui::Color32::from_rgb(0x21, 0x16, 0x1d), contrast_background: egui::Color32::from_rgb(0x0b, 0x07, 0x0a),
-                secondary_text: egui::Color32::from_rgb(0xb9, 0x9e, 0xaa), accent: egui::Color32::from_rgb(0xe0, 0x4b, 0x68), control_background: egui::Color32::from_rgb(0x36, 0x24, 0x2e),
-                primary_text: egui::Color32::from_rgb(0xf7, 0xea, 0xef), selection_background: egui::Color32::from_rgb(0x62, 0x27, 0x3d), error_text: egui::Color32::from_rgb(0xff, 0x8b, 0x9b),
-                button_hover_background: egui::Color32::from_rgb(0x4b, 0x2a, 0x39), button_active_background: egui::Color32::from_rgb(0x68, 0x2a, 0x43),
-                button_text: egui::Color32::from_rgb(0xf7, 0xea, 0xef), button_hover_text: egui::Color32::from_rgb(0xff, 0xf5, 0xf8), button_active_text: egui::Color32::from_rgb(0xff, 0xf5, 0xf8),
-                card_border: egui::Stroke::new(1.0, egui::Color32::from_rgb(0x3d, 0x29, 0x34)), control_border: Some(egui::Stroke::new(1.0, egui::Color32::from_rgb(0x61, 0x3d, 0x4e))), hover_border: Some(egui::Stroke::new(1.0, egui::Color32::from_rgb(0xe0, 0x4b, 0x68))),
-                window_border: Some(egui::Stroke::new(1.0, egui::Color32::from_rgb(0x3d, 0x29, 0x34))), button_corner_radius: Some(egui::CornerRadius::same(8)),
-                card_corner_radius: egui::CornerRadius::same(14), use_dark_visuals: true,
+                main_background: egui::Color32::from_rgb(0x12, 0x0c, 0x11),
+                surface_background: egui::Color32::from_rgb(0x21, 0x16, 0x1d),
+                contrast_background: egui::Color32::from_rgb(0x0b, 0x07, 0x0a),
+                secondary_text: egui::Color32::from_rgb(0xb9, 0x9e, 0xaa),
+                accent: egui::Color32::from_rgb(0xe0, 0x4b, 0x68),
+                control_background: egui::Color32::from_rgb(0x36, 0x24, 0x2e),
+                primary_text: egui::Color32::from_rgb(0xf7, 0xea, 0xef),
+                selection_background: egui::Color32::from_rgb(0x62, 0x27, 0x3d),
+                error_text: egui::Color32::from_rgb(0xff, 0x8b, 0x9b),
+                button_hover_background: egui::Color32::from_rgb(0x4b, 0x2a, 0x39),
+                button_active_background: egui::Color32::from_rgb(0x68, 0x2a, 0x43),
+                button_text: egui::Color32::from_rgb(0xf7, 0xea, 0xef),
+                button_hover_text: egui::Color32::from_rgb(0xff, 0xf5, 0xf8),
+                button_active_text: egui::Color32::from_rgb(0xff, 0xf5, 0xf8),
+                card_border: egui::Stroke::new(1.0, egui::Color32::from_rgb(0x3d, 0x29, 0x34)),
+                control_border: Some(egui::Stroke::new(
+                    1.0,
+                    egui::Color32::from_rgb(0x61, 0x3d, 0x4e),
+                )),
+                hover_border: Some(egui::Stroke::new(
+                    1.0,
+                    egui::Color32::from_rgb(0xe0, 0x4b, 0x68),
+                )),
+                window_border: Some(egui::Stroke::new(
+                    1.0,
+                    egui::Color32::from_rgb(0x3d, 0x29, 0x34),
+                )),
+                button_corner_radius: Some(egui::CornerRadius::same(8)),
+                card_corner_radius: egui::CornerRadius::same(14),
+                use_dark_visuals: true,
             },
             Self::WindowsClassic => ThemePalette {
                 // Windows 98/2000 grey, navy selection and square controls.
-                main_background: egui::Color32::from_rgb(0xc0, 0xc0, 0xc0), surface_background: egui::Color32::from_rgb(0xc0, 0xc0, 0xc0), contrast_background: egui::Color32::from_rgb(0xff, 0xff, 0xff),
-                secondary_text: egui::Color32::from_rgb(0x40, 0x40, 0x40), accent: egui::Color32::from_rgb(0x00, 0x00, 0x80), control_background: egui::Color32::from_rgb(0xc0, 0xc0, 0xc0),
-                primary_text: egui::Color32::from_rgb(0x00, 0x00, 0x00), selection_background: egui::Color32::from_rgb(0x00, 0x00, 0x80), error_text: egui::Color32::from_rgb(0x80, 0x00, 0x00),
-                button_hover_background: egui::Color32::from_rgb(0xd4, 0xd0, 0xc8), button_active_background: egui::Color32::from_rgb(0xa8, 0xa8, 0xa8),
-                button_text: egui::Color32::from_rgb(0x00, 0x00, 0x00), button_hover_text: egui::Color32::from_rgb(0x00, 0x00, 0x00), button_active_text: egui::Color32::from_rgb(0x00, 0x00, 0x00),
-                card_border: egui::Stroke::new(1.0, egui::Color32::from_rgb(0x80, 0x80, 0x80)), control_border: Some(egui::Stroke::new(1.0, egui::Color32::from_rgb(0x40, 0x40, 0x40))), hover_border: Some(egui::Stroke::new(1.0, egui::Color32::from_rgb(0x80, 0x80, 0x80))),
-                window_border: Some(egui::Stroke::new(1.0, egui::Color32::from_rgb(0x40, 0x40, 0x40))), button_corner_radius: Some(egui::CornerRadius::ZERO),
-                card_corner_radius: egui::CornerRadius::ZERO, use_dark_visuals: false,
+                main_background: egui::Color32::from_rgb(0xc0, 0xc0, 0xc0),
+                surface_background: egui::Color32::from_rgb(0xc0, 0xc0, 0xc0),
+                contrast_background: egui::Color32::from_rgb(0xff, 0xff, 0xff),
+                secondary_text: egui::Color32::from_rgb(0x40, 0x40, 0x40),
+                accent: egui::Color32::from_rgb(0x00, 0x00, 0x80),
+                control_background: egui::Color32::from_rgb(0xc0, 0xc0, 0xc0),
+                primary_text: egui::Color32::from_rgb(0x00, 0x00, 0x00),
+                selection_background: egui::Color32::from_rgb(0x00, 0x00, 0x80),
+                error_text: egui::Color32::from_rgb(0x80, 0x00, 0x00),
+                button_hover_background: egui::Color32::from_rgb(0xd4, 0xd0, 0xc8),
+                button_active_background: egui::Color32::from_rgb(0xa8, 0xa8, 0xa8),
+                button_text: egui::Color32::from_rgb(0x00, 0x00, 0x00),
+                button_hover_text: egui::Color32::from_rgb(0x00, 0x00, 0x00),
+                button_active_text: egui::Color32::from_rgb(0x00, 0x00, 0x00),
+                card_border: egui::Stroke::new(1.0, egui::Color32::from_rgb(0x80, 0x80, 0x80)),
+                control_border: Some(egui::Stroke::new(
+                    1.0,
+                    egui::Color32::from_rgb(0x40, 0x40, 0x40),
+                )),
+                hover_border: Some(egui::Stroke::new(
+                    1.0,
+                    egui::Color32::from_rgb(0x80, 0x80, 0x80),
+                )),
+                window_border: Some(egui::Stroke::new(
+                    1.0,
+                    egui::Color32::from_rgb(0x40, 0x40, 0x40),
+                )),
+                button_corner_radius: Some(egui::CornerRadius::ZERO),
+                card_corner_radius: egui::CornerRadius::ZERO,
+                use_dark_visuals: false,
             },
         }
     }
@@ -234,7 +363,6 @@ impl Default for OffTimerApp {
 }
 
 impl OffTimerApp {
-
     fn new(ctx: &egui::Context) -> Self {
         let mut app = Self::default();
 
@@ -295,7 +423,8 @@ impl OffTimerApp {
 
         // Back off only after a failed write. Successful saves never delay a later change.
         if respect_retry_delay
-            && self.last_settings_save_failure
+            && self
+                .last_settings_save_failure
                 .is_some_and(|last_failure| last_failure.elapsed() < Duration::from_secs(1))
         {
             return;
@@ -328,7 +457,11 @@ impl OffTimerApp {
     }
 
     fn apply_theme(ctx: &egui::Context, palette: &ThemePalette) {
-        let mut visuals = if palette.use_dark_visuals { egui::Visuals::dark() } else { egui::Visuals::light() };
+        let mut visuals = if palette.use_dark_visuals {
+            egui::Visuals::dark()
+        } else {
+            egui::Visuals::light()
+        };
         visuals.panel_fill = palette.main_background;
         visuals.window_fill = palette.surface_background;
         visuals.extreme_bg_color = palette.contrast_background;
@@ -436,8 +569,8 @@ impl OffTimerApp {
         let Some((_, default_hours, default_minutes)) = QUICK_PRESETS.get(index).copied() else {
             return;
         };
-        let (hours, minutes) = self.quick_preset_custom_durations[index]
-            .unwrap_or((default_hours, default_minutes));
+        let (hours, minutes) =
+            self.quick_preset_custom_durations[index].unwrap_or((default_hours, default_minutes));
 
         self.custom_hours_draft = hours.to_string();
         self.custom_minutes_draft = minutes.to_string();
@@ -473,12 +606,12 @@ impl OffTimerApp {
     }
 
     fn cancel_timer(&mut self) {
-        if self.windows_countdown_started {
-            if let Err(error) = actions::abort_system_countdown() {
-                self.status_message = Some(format!("Could not cancel the Windows shutdown: {error}"));
-                self.status_is_error = true;
-                return;
-            }
+        if self.windows_countdown_started
+            && let Err(error) = actions::abort_system_countdown()
+        {
+            self.status_message = Some(format!("Could not cancel the Windows shutdown: {error}"));
+            self.status_is_error = true;
+            return;
         }
 
         if self.tray_notification_visible {
@@ -514,17 +647,17 @@ impl OffTimerApp {
 
     #[cfg(windows)]
     fn cancel_after_sleep_resume(&mut self) {
-        if self.windows_countdown_started {
-            if let Err(error) = actions::abort_system_countdown() {
-                // Keep the native-countdown state so the user can still retry
-                // cancellation manually from OffTimer.
-                self.deadline = None;
-                self.status_message = Some(format!(
-                    "The PC resumed from sleep, but Windows' pending shutdown could not be cancelled: {error}"
-                ));
-                self.status_is_error = true;
-                return;
-            }
+        if self.windows_countdown_started
+            && let Err(error) = actions::abort_system_countdown()
+        {
+            // Keep the native-countdown state so the user can still retry
+            // cancellation manually from OffTimer.
+            self.deadline = None;
+            self.status_message = Some(format!(
+                "The PC resumed from sleep, but Windows' pending shutdown could not be cancelled: {error}"
+            ));
+            self.status_is_error = true;
+            return;
         }
 
         if self.tray_notification_visible {
@@ -538,9 +671,8 @@ impl OffTimerApp {
         self.final_minute_notification_sent = false;
         self.hours_input.clear();
         self.minutes_input.clear();
-        self.status_message = Some(
-            "Timer cancelled because the PC resumed from sleep or hibernation.".to_owned(),
-        );
+        self.status_message =
+            Some("Timer cancelled because the PC resumed from sleep or hibernation.".to_owned());
         self.status_is_error = false;
     }
 
@@ -574,9 +706,8 @@ impl OffTimerApp {
                     Err(error) => {
                         self.deadline = None;
                         self.pending_action = None;
-                        self.status_message = Some(format!(
-                            "Could not start the Windows countdown: {error}"
-                        ));
+                        self.status_message =
+                            Some(format!("Could not start the Windows countdown: {error}"));
                         self.status_is_error = true;
                         return;
                     }
@@ -639,7 +770,8 @@ impl OffTimerApp {
                 self.status_is_error = false;
             }
             Err(error) => {
-                self.status_message = Some(format!("Could not perform {}: {}", action.label(), error));
+                self.status_message =
+                    Some(format!("Could not perform {}: {}", action.label(), error));
                 self.status_is_error = true;
             }
         }
@@ -698,10 +830,7 @@ impl OffTimerApp {
                     ui.add_space(4.0);
                     ui.label(format!("Version {}", env!("CARGO_PKG_VERSION")));
                     ui.add_space(16.0);
-                    ui.hyperlink_to(
-                        "© 2026 Amel Okicic",
-                        "https://github.com/Amel-Okicic",
-                    );
+                    ui.hyperlink_to("© 2026 Amel Okicic", "https://github.com/Amel-Okicic");
                     ui.add_space(4.0);
                 });
             });
@@ -713,17 +842,17 @@ impl OffTimerApp {
     fn show_custom_tooltip(&mut self, ctx: &egui::Context, response: &egui::Response) {
         if response.hovered() {
             let started = self.custom_hover_started.get_or_insert_with(Instant::now);
-            if started.elapsed() >= Duration::from_millis(1_500) {
-                if let Some(position) = response.hover_pos() {
-                    egui::Area::new(egui::Id::new("custom-preset-tooltip"))
-                        .order(egui::Order::Tooltip)
-                        .fixed_pos(position + egui::vec2(12.0, 18.0))
-                        .show(ctx, |ui| {
-                            egui::Frame::popup(ui.style()).show(ui, |ui| {
-                                ui.label("Right click for customization.");
-                            });
+            if started.elapsed() >= Duration::from_millis(1_500)
+                && let Some(position) = response.hover_pos()
+            {
+                egui::Area::new(egui::Id::new("custom-preset-tooltip"))
+                    .order(egui::Order::Tooltip)
+                    .fixed_pos(position + egui::vec2(12.0, 18.0))
+                    .show(ctx, |ui| {
+                        egui::Frame::popup(ui.style()).show(ui, |ui| {
+                            ui.label("Right click for customization.");
                         });
-                }
+                    });
             }
         } else {
             self.custom_hover_started = None;
@@ -813,7 +942,12 @@ impl OffTimerApp {
                             egui::vec2(column_width, 64.0),
                             egui::Layout::top_down(egui::Align::Center),
                             |ui| {
-                                ui.label(egui::RichText::new("HOURS").size(11.0).color(palette.secondary_text).strong());
+                                ui.label(
+                                    egui::RichText::new("HOURS")
+                                        .size(11.0)
+                                        .color(palette.secondary_text)
+                                        .strong(),
+                                );
                                 ui.add_sized(
                                     [column_width, 40.0],
                                     egui::TextEdit::singleline(&mut hours)
@@ -826,7 +960,12 @@ impl OffTimerApp {
                             egui::vec2(column_width, 64.0),
                             egui::Layout::top_down(egui::Align::Center),
                             |ui| {
-                                ui.label(egui::RichText::new("MINUTES").size(11.0).color(palette.secondary_text).strong());
+                                ui.label(
+                                    egui::RichText::new("MINUTES")
+                                        .size(11.0)
+                                        .color(palette.secondary_text)
+                                        .strong(),
+                                );
                                 ui.add_sized(
                                     [column_width, 40.0],
                                     egui::TextEdit::singleline(&mut minutes)
@@ -850,10 +989,16 @@ impl OffTimerApp {
                     ui.horizontal(|ui| {
                         ui.add_space(((ui.available_width() - buttons_group_width) * 0.5).max(0.0));
                         ui.horizontal(|ui| {
-                            if ui.add_sized([112.0, 38.0], egui::Button::new("SAVE")).clicked() {
+                            if ui
+                                .add_sized([112.0, 38.0], egui::Button::new("SAVE"))
+                                .clicked()
+                            {
                                 save_clicked = true;
                             }
-                            if ui.add_sized([112.0, 38.0], egui::Button::new("CANCEL")).clicked() {
+                            if ui
+                                .add_sized([112.0, 38.0], egui::Button::new("CANCEL"))
+                                .clicked()
+                            {
                                 cancel_clicked = true;
                             }
                         });
@@ -873,7 +1018,10 @@ impl OffTimerApp {
             self.editing_quick_preset = None;
         } else if save_clicked {
             match parse_duration(&hours, &minutes) {
-                Ok(_) => match (parse_optional_number(&hours), parse_optional_number(&minutes)) {
+                Ok(_) => match (
+                    parse_optional_number(&hours),
+                    parse_optional_number(&minutes),
+                ) {
                     (Ok(h), Ok(m)) => {
                         if let Some(index) = editing_quick_preset {
                             let (label, default_hours, default_minutes) = QUICK_PRESETS[index];
@@ -910,11 +1058,11 @@ impl OffTimerApp {
 
 impl eframe::App for OffTimerApp {
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        if !self.centered_on_launch {
-            if let Some(command) = egui::ViewportCommand::center_on_screen(ctx) {
-                ctx.send_viewport_cmd(command);
-                self.centered_on_launch = true;
-            }
+        if !self.centered_on_launch
+            && let Some(command) = egui::ViewportCommand::center_on_screen(ctx)
+        {
+            ctx.send_viewport_cmd(command);
+            self.centered_on_launch = true;
         }
 
         let close_requested = ctx.input(|input| input.viewport().close_requested());
@@ -946,7 +1094,11 @@ impl eframe::App for OffTimerApp {
         let palette = self.theme.palette();
         Self::apply_theme(&ctx, &palette);
         egui::CentralPanel::default()
-            .frame(egui::Frame::new().fill(palette.main_background).inner_margin(egui::Margin::same(24)))
+            .frame(
+                egui::Frame::new()
+                    .fill(palette.main_background)
+                    .inner_margin(egui::Margin::same(24)),
+            )
             .show(ui, |ui| {
                 let menu_available = ui.available_rect_before_wrap();
                 // The right-side controls are scaled up by 80%; keep the menu row tall enough.
@@ -961,7 +1113,10 @@ impl eframe::App for OffTimerApp {
                 );
                 let right_menu_rect = egui::Rect::from_min_size(
                     egui::pos2(left_menu_rect.max.x, menu_rect.min.y),
-                    egui::vec2((menu_rect.max.x - left_menu_rect.max.x - 12.0).max(0.0), menu_height),
+                    egui::vec2(
+                        (menu_rect.max.x - left_menu_rect.max.x - 12.0).max(0.0),
+                        menu_height,
+                    ),
                 );
 
                 let mut left_menu_ui = ui.new_child(
@@ -981,59 +1136,59 @@ impl eframe::App for OffTimerApp {
                     }
 
                     egui::MenuBar::new().ui(ui, |ui| {
-                    ui.menu_button("FILE", |ui| {
-                        Self::apply_menu_popup_style(ui, &palette);
-
-                        ui.menu_button("Theme", |ui| {
+                        ui.menu_button("FILE", |ui| {
                             Self::apply_menu_popup_style(ui, &palette);
 
-                            for theme in Theme::ALL {
-                                let label = theme.label();
-                                let item_color = if self.theme == theme {
-                                    palette.accent
-                                } else {
-                                    palette.primary_text
-                                };
-                                let item_text = egui::RichText::new(label).color(item_color);
-                                let item_text = if self.theme == theme {
-                                    item_text.strong()
-                                } else {
-                                    item_text
-                                };
+                            ui.menu_button("Theme", |ui| {
+                                Self::apply_menu_popup_style(ui, &palette);
 
-                                if ui.button(item_text).clicked() {
-                                    if self.theme != theme {
-                                        self.theme = theme;
-                                        self.settings_dirty = true;
+                                for theme in Theme::ALL {
+                                    let label = theme.label();
+                                    let item_color = if self.theme == theme {
+                                        palette.accent
+                                    } else {
+                                        palette.primary_text
+                                    };
+                                    let item_text = egui::RichText::new(label).color(item_color);
+                                    let item_text = if self.theme == theme {
+                                        item_text.strong()
+                                    } else {
+                                        item_text
+                                    };
+
+                                    if ui.button(item_text).clicked() {
+                                        if self.theme != theme {
+                                            self.theme = theme;
+                                            self.settings_dirty = true;
+                                        }
+                                        ui.close();
                                     }
-                                    ui.close();
                                 }
+                            });
+
+                            ui.separator();
+
+                            if ui.button("Exit").clicked() {
+                                self.exit_requested = true;
+                                self.close_to_tray = false;
+                                #[cfg(windows)]
+                                {
+                                    self.tray_icon = None;
+                                }
+                                ui.send_viewport_cmd(egui::ViewportCommand::Close);
                             }
                         });
 
-                        ui.separator();
-
-                        if ui.button("Exit").clicked() {
-                            self.exit_requested = true;
-                            self.close_to_tray = false;
-                            #[cfg(windows)]
-                            {
-                                self.tray_icon = None;
+                        ui.menu_button("HELP", |ui| {
+                            Self::apply_menu_popup_style(ui, &palette);
+                            if ui.button("About OffTimer").clicked() {
+                                self.about_dialog_open = true;
+                                ui.close();
                             }
-                            ui.send_viewport_cmd(egui::ViewportCommand::Close);
-                        }
-                    });
-
-                    ui.menu_button("HELP", |ui| {
-                        Self::apply_menu_popup_style(ui, &palette);
-                        if ui.button("About OffTimer").clicked() {
-                            self.about_dialog_open = true;
-                            ui.close();
-                        }
-                    });
+                        });
                     });
                 });
-                
+
                 let mut right_menu_ui = ui.new_child(
                     egui::UiBuilder::new()
                         .id_salt("offtimer-menu-right")
@@ -1066,17 +1221,18 @@ impl eframe::App for OffTimerApp {
                                 }
                                 Err(error) => {
                                     self.close_to_tray = false;
-                                    self.status_message = Some(format!(
-                                        "Could not enable Close to Tray: {error}"
-                                    ));
+                                    self.status_message =
+                                        Some(format!("Could not enable Close to Tray: {error}"));
                                     self.status_is_error = true;
                                 }
                             }
                         } else {
                             self.close_to_tray = false;
                             self.tray_icon = None;
-                            self.status_message =
-                                Some("Close to Tray is disabled. The X button will exit OffTimer.".to_owned());
+                            self.status_message = Some(
+                                "Close to Tray is disabled. The X button will exit OffTimer."
+                                    .to_owned(),
+                            );
                             self.status_is_error = false;
                         }
                     }
@@ -1138,10 +1294,8 @@ impl eframe::App for OffTimerApp {
                 let left_width = (cards_rect.width() - gap) * 0.35;
                 let right_width = cards_rect.width() - gap - left_width;
                 let panel_height = cards_rect.height();
-                let left_rect = egui::Rect::from_min_size(
-                    cards_rect.min,
-                    egui::vec2(left_width, panel_height),
-                );
+                let left_rect =
+                    egui::Rect::from_min_size(cards_rect.min, egui::vec2(left_width, panel_height));
                 let right_rect = egui::Rect::from_min_size(
                     egui::pos2(left_rect.max.x + gap, cards_rect.min.y),
                     egui::vec2(right_width, panel_height),
@@ -1156,100 +1310,93 @@ impl eframe::App for OffTimerApp {
                         .layout(egui::Layout::top_down(egui::Align::Min)),
                 );
                 egui::Frame::new()
-                                .fill(palette.surface_background)
-                                .corner_radius(palette.card_corner_radius)
-                                .stroke(palette.card_border)
-                                .inner_margin(egui::Margin::same(22))
-                                .show(&mut left_ui, |ui| {
-                                    ui.set_min_width(left_width - 44.0);
-                                    ui.set_min_height(panel_height - 44.0);
-                                    ui.with_layout(
-                                        egui::Layout::top_down(egui::Align::Center),
-                                        |ui| {
-                                            ui.label(
-                                                egui::RichText::new("QUICK PRESETS")
-                                                    .size(16.0)
-                                                    .strong()
-                                                    .color(palette.secondary_text),
-                                            );
-                                        },
-                                    );
-                                    ui.add_space(14.0);
+                    .fill(palette.surface_background)
+                    .corner_radius(palette.card_corner_radius)
+                    .stroke(palette.card_border)
+                    .inner_margin(egui::Margin::same(22))
+                    .show(&mut left_ui, |ui| {
+                        ui.set_min_width(left_width - 44.0);
+                        ui.set_min_height(panel_height - 44.0);
+                        ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                            ui.label(
+                                egui::RichText::new("QUICK PRESETS")
+                                    .size(16.0)
+                                    .strong()
+                                    .color(palette.secondary_text),
+                            );
+                        });
+                        ui.add_space(14.0);
 
-                                    let button_width = ui.available_width().max(120.0);
-                                    let mut hovered_quick_preset: Option<egui::Response> = None;
-                                    for (index, (label, default_hours, default_minutes)) in
-                                        QUICK_PRESETS.iter().enumerate()
-                                    {
-                                        let custom_duration = self.quick_preset_custom_durations[index];
-                                        let (hours, minutes) = custom_duration
-                                            .unwrap_or((*default_hours, *default_minutes));
-                                        let button_label = if custom_duration.is_some() {
-                                            format_custom_label(hours, minutes)
-                                        } else {
-                                            (*label).to_owned()
-                                        };
+                        let button_width = ui.available_width().max(120.0);
+                        let mut hovered_quick_preset: Option<egui::Response> = None;
+                        for (index, (label, default_hours, default_minutes)) in
+                            QUICK_PRESETS.iter().enumerate()
+                        {
+                            let custom_duration = self.quick_preset_custom_durations[index];
+                            let (hours, minutes) =
+                                custom_duration.unwrap_or((*default_hours, *default_minutes));
+                            let button_label = if custom_duration.is_some() {
+                                format_custom_label(hours, minutes)
+                            } else {
+                                (*label).to_owned()
+                            };
 
-                                        let response = ui
-                                            .add_enabled_ui(!running, |ui| {
-                                                ui.add_sized(
-                                                    [button_width, 54.0],
-                                                    egui::Button::new(
-                                                        egui::RichText::new(button_label)
-                                                            .size(14.0)
-                                                            .strong(),
-                                                    ),
-                                                )
-                                            })
-                                            .inner;
+                            let response = ui
+                                .add_enabled_ui(!running, |ui| {
+                                    ui.add_sized(
+                                        [button_width, 54.0],
+                                        egui::Button::new(
+                                            egui::RichText::new(button_label).size(14.0).strong(),
+                                        ),
+                                    )
+                                })
+                                .inner;
 
-                                        if response.secondary_clicked() {
-                                            self.open_quick_preset_dialog(index);
-                                        } else if response.clicked() {
-                                            self.set_preset(hours, minutes);
-                                        }
+                            if response.secondary_clicked() {
+                                self.open_quick_preset_dialog(index);
+                            } else if response.clicked() {
+                                self.set_preset(hours, minutes);
+                            }
 
-                                        if response.hovered() {
-                                            hovered_quick_preset = Some(response);
-                                        }
-                                    }
+                            if response.hovered() {
+                                hovered_quick_preset = Some(response);
+                            }
+                        }
 
-                                    let custom_label = self
-                                        .custom_duration
-                                        .map(|(h, m)| format_custom_label(h, m))
-                                        .unwrap_or_else(|| "CUSTOM".to_owned());
+                        let custom_label = self
+                            .custom_duration
+                            .map(|(h, m)| format_custom_label(h, m))
+                            .unwrap_or_else(|| "CUSTOM".to_owned());
 
-                                    let custom_response = ui
-                                        .add_enabled_ui(!running, |ui| {
-                                            ui.add_sized(
-                                                [button_width, 54.0],
-                                                egui::Button::new(
-                                                    egui::RichText::new(custom_label)
-                                                        .size(14.0)
-                                                        .strong(),
-                                                ),
-                                            )
-                                        })
-                                        .inner;
+                        let custom_response = ui
+                            .add_enabled_ui(!running, |ui| {
+                                ui.add_sized(
+                                    [button_width, 54.0],
+                                    egui::Button::new(
+                                        egui::RichText::new(custom_label).size(14.0).strong(),
+                                    ),
+                                )
+                            })
+                            .inner;
 
-                                    if custom_response.secondary_clicked() {
-                                        self.open_custom_dialog();
-                                    } else if custom_response.clicked() {
-                                        if let Some((hours, minutes)) = self.custom_duration {
-                                            self.set_preset(hours, minutes);
-                                        } else {
-                                            self.open_custom_dialog();
-                                        }
-                                    }
+                        if custom_response.secondary_clicked() {
+                            self.open_custom_dialog();
+                        } else if custom_response.clicked() {
+                            if let Some((hours, minutes)) = self.custom_duration {
+                                self.set_preset(hours, minutes);
+                            } else {
+                                self.open_custom_dialog();
+                            }
+                        }
 
-                                    if custom_response.hovered() {
-                                        self.show_custom_tooltip(&ctx, &custom_response);
-                                    } else if let Some(response) = hovered_quick_preset.as_ref() {
-                                        self.show_custom_tooltip(&ctx, response);
-                                    } else {
-                                        self.custom_hover_started = None;
-                                    }
-                                });
+                        if custom_response.hovered() {
+                            self.show_custom_tooltip(&ctx, &custom_response);
+                        } else if let Some(response) = hovered_quick_preset.as_ref() {
+                            self.show_custom_tooltip(&ctx, response);
+                        } else {
+                            self.custom_hover_started = None;
+                        }
+                    });
 
                 let mut right_ui = ui.new_child(
                     egui::UiBuilder::new()
@@ -1258,243 +1405,236 @@ impl eframe::App for OffTimerApp {
                         .layout(egui::Layout::top_down(egui::Align::Min)),
                 );
                 egui::Frame::new()
-                                .fill(palette.surface_background)
-                                .corner_radius(palette.card_corner_radius)
-                                .stroke(palette.card_border)
-                                .inner_margin(egui::Margin::same(22))
-                                .show(&mut right_ui, |ui| {
-                                    ui.set_min_width(right_width - 44.0);
-                                    ui.set_min_height(panel_height - 44.0);
+                    .fill(palette.surface_background)
+                    .corner_radius(palette.card_corner_radius)
+                    .stroke(palette.card_border)
+                    .inner_margin(egui::Margin::same(22))
+                    .show(&mut right_ui, |ui| {
+                        ui.set_min_width(right_width - 44.0);
+                        ui.set_min_height(panel_height - 44.0);
 
-                                    ui.with_layout(
-                                        egui::Layout::top_down(egui::Align::Center),
-                                        |ui| {
-                                            ui.label(
-                                                egui::RichText::new("SET TIMER")
-                                                    .size(16.0)
-                                                    .strong()
-                                                    .color(palette.secondary_text),
-                                            );
-                                        },
+                        ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                            ui.label(
+                                egui::RichText::new("SET TIMER")
+                                    .size(16.0)
+                                    .strong()
+                                    .color(palette.secondary_text),
+                            );
+                        });
+                        ui.add_space(10.0);
+
+                        let field_width = ((ui.available_width() - 14.0) / 2.0).clamp(92.0, 190.0);
+
+                        ui.horizontal(|ui| {
+                            let input_row_width = field_width * 2.0 + ui.spacing().item_spacing.x;
+                            ui.add_space(((ui.available_width() - input_row_width).max(0.0)) / 2.0);
+
+                            ui.vertical(|ui| {
+                                ui.label(
+                                    egui::RichText::new("HOURS")
+                                        .size(11.0)
+                                        .strong()
+                                        .color(palette.secondary_text),
+                                );
+                                let response = ui
+                                    .add_enabled_ui(!running, |ui| {
+                                        ui.add_sized(
+                                            [field_width, 48.0],
+                                            egui::TextEdit::singleline(&mut self.hours_input)
+                                                .font(egui::FontId::proportional(22.0))
+                                                .char_limit(3)
+                                                .horizontal_align(egui::Align::Center),
+                                        )
+                                    })
+                                    .inner;
+                                timer_input_has_focus |=
+                                    response.has_focus() || response.lost_focus();
+                            });
+
+                            ui.vertical(|ui| {
+                                ui.label(
+                                    egui::RichText::new("MINUTES")
+                                        .size(11.0)
+                                        .strong()
+                                        .color(palette.secondary_text),
+                                );
+                                let response = ui
+                                    .add_enabled_ui(!running, |ui| {
+                                        ui.add_sized(
+                                            [field_width, 48.0],
+                                            egui::TextEdit::singleline(&mut self.minutes_input)
+                                                .font(egui::FontId::proportional(22.0))
+                                                .char_limit(2)
+                                                .horizontal_align(egui::Align::Center),
+                                        )
+                                    })
+                                    .inner;
+                                timer_input_has_focus |=
+                                    response.has_focus() || response.lost_focus();
+                            });
+                        });
+
+                        ui.add_space(18.0);
+
+                        if let Some(countdown) = self.countdown_text() {
+                            ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                                ui.label(
+                                    egui::RichText::new(countdown)
+                                        .size(40.0)
+                                        .strong()
+                                        .color(palette.accent),
+                                );
+                                ui.label(
+                                    egui::RichText::new(format!(
+                                        "{} will run when the countdown reaches zero.",
+                                        self.pending_action
+                                            .map(PowerAction::label)
+                                            .unwrap_or("Selected action")
+                                    ))
+                                    .size(11.0)
+                                    .color(palette.secondary_text),
+                                );
+                            });
+                        } else {
+                            ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                                ui.label(
+                                    egui::RichText::new("No timer set.")
+                                        .size(14.0)
+                                        .color(palette.secondary_text),
+                                );
+                            });
+                            ui.add_space(22.0);
+                        }
+
+                        ui.add_space(12.0);
+
+                        let button_width = ((ui.available_width() - 12.0) / 2.0).max(110.0);
+                        ui.horizontal(|ui| {
+                            if ui
+                                .add_enabled(
+                                    !running,
+                                    egui::Button::new(
+                                        egui::RichText::new("CONFIRM").strong().size(14.0),
+                                    )
+                                    .min_size(egui::vec2(button_width, 48.0)),
+                                )
+                                .clicked()
+                            {
+                                self.start_timer();
+                            }
+
+                            if ui
+                                .add_sized(
+                                    [button_width, 48.0],
+                                    egui::Button::new(
+                                        egui::RichText::new("CANCEL").strong().size(14.0),
+                                    ),
+                                )
+                                .clicked()
+                            {
+                                self.cancel_timer();
+                            }
+                        });
+
+                        ui.add_space(20.0);
+                        ui.vertical_centered(|ui| {
+                            ui.label(
+                                egui::RichText::new("ACTION")
+                                    .size(11.0)
+                                    .strong()
+                                    .color(palette.secondary_text),
+                            );
+                        });
+
+                        ui.add_enabled_ui(!running, |ui| {
+                            ui.spacing_mut().item_spacing.x += 5.0;
+                            ui.vertical_centered(|ui| {
+                                ui.horizontal_wrapped(|ui| {
+                                    let selected = self.selected_action;
+                                    ui.radio_value(
+                                        &mut self.selected_action,
+                                        PowerAction::Shutdown,
+                                        egui::RichText::new("SHUT DOWN").color(
+                                            if selected == PowerAction::Shutdown {
+                                                palette.accent
+                                            } else {
+                                                palette.secondary_text
+                                            },
+                                        ),
                                     );
-                                    ui.add_space(10.0);
-
-                                    let field_width = ((ui.available_width() - 14.0) / 2.0)
-                                        .clamp(92.0, 190.0);
-
-                                    ui.horizontal(|ui| {
-                                        let input_row_width =
-                                            field_width * 2.0 + ui.spacing().item_spacing.x;
-                                        ui.add_space(
-                                            ((ui.available_width() - input_row_width).max(0.0))
-                                                / 2.0,
-                                        );
-
-                                        ui.vertical(|ui| {
-                                            ui.label(
-                                                egui::RichText::new("HOURS")
-                                                    .size(11.0)
-                                                    .strong()
-                                                    .color(palette.secondary_text),
-                                            );
-                                            let response = ui
-                                                .add_enabled_ui(!running, |ui| {
-                                                    ui.add_sized(
-                                                        [field_width, 48.0],
-                                                        egui::TextEdit::singleline(&mut self.hours_input)
-                                                            .font(egui::FontId::proportional(22.0))
-                                                            .char_limit(3)
-                                                            .horizontal_align(egui::Align::Center),
-                                                    )
-                                                })
-                                                .inner;
-                                            timer_input_has_focus |= response.has_focus() || response.lost_focus();
-                                        });
-
-                                        ui.vertical(|ui| {
-                                            ui.label(
-                                                egui::RichText::new("MINUTES")
-                                                    .size(11.0)
-                                                    .strong()
-                                                    .color(palette.secondary_text),
-                                            );
-                                            let response = ui
-                                                .add_enabled_ui(!running, |ui| {
-                                                    ui.add_sized(
-                                                        [field_width, 48.0],
-                                                        egui::TextEdit::singleline(&mut self.minutes_input)
-                                                            .font(egui::FontId::proportional(22.0))
-                                                            .char_limit(2)
-                                                            .horizontal_align(egui::Align::Center),
-                                                    )
-                                                })
-                                                .inner;
-                                            timer_input_has_focus |= response.has_focus() || response.lost_focus();
-                                        });
-                                    });
-
-                                    ui.add_space(18.0);
-
-                                    if let Some(countdown) = self.countdown_text() {
-                                        ui.with_layout(
-                                            egui::Layout::top_down(egui::Align::Center),
-                                            |ui| {
-                                                ui.label(
-                                                    egui::RichText::new(countdown)
-                                                        .size(40.0)
-                                                        .strong()
-                                                        .color(palette.accent),
-                                                );
-                                                ui.label(
-                                                    egui::RichText::new(format!(
-                                                        "{} will run when the countdown reaches zero.",
-                                                        self.pending_action
-                                                            .map(PowerAction::label)
-                                                            .unwrap_or("Selected action")
-                                                    ))
-                                                    .size(11.0)
-                                                    .color(palette.secondary_text),
-                                                );
+                                    let selected = self.selected_action;
+                                    ui.radio_value(
+                                        &mut self.selected_action,
+                                        PowerAction::Sleep,
+                                        egui::RichText::new("SLEEP").color(
+                                            if selected == PowerAction::Sleep {
+                                                palette.accent
+                                            } else {
+                                                palette.secondary_text
                                             },
-                                        );
-                                    } else {
-                                        ui.with_layout(
-                                            egui::Layout::top_down(egui::Align::Center),
-                                            |ui| {
-                                                ui.label(
-                                                    egui::RichText::new("No timer set.")
-                                                        .size(14.0)
-                                                        .color(palette.secondary_text),
-                                                );
+                                        ),
+                                    );
+                                    let selected = self.selected_action;
+                                    ui.radio_value(
+                                        &mut self.selected_action,
+                                        PowerAction::SignOut,
+                                        egui::RichText::new("SIGN OUT").color(
+                                            if selected == PowerAction::SignOut {
+                                                palette.accent
+                                            } else {
+                                                palette.secondary_text
                                             },
-                                        );
-                                        ui.add_space(22.0);
-                                    }
-
-                                    ui.add_space(12.0);
-
-                                    let button_width = ((ui.available_width() - 12.0) / 2.0)
-                                        .max(110.0);
-                                    ui.horizontal(|ui| {
-                                        if ui
-                                            .add_enabled(
-                                                !running,
-                                                egui::Button::new(
-                                                    egui::RichText::new("CONFIRM")
-                                                        .strong()
-                                                        .size(14.0),
-                                                )
-                                                .min_size(egui::vec2(button_width, 48.0)),
-                                            )
-                                            .clicked()
-                                        {
-                                            self.start_timer();
-                                        }
-
-                                        if ui
-                                            .add_sized(
-                                                [button_width, 48.0],
-                                                egui::Button::new(
-                                                    egui::RichText::new("CANCEL")
-                                                        .strong()
-                                                        .size(14.0),
-                                                ),
-                                            )
-                                            .clicked()
-                                        {
-                                            self.cancel_timer();
-                                        }
-                                    });
-
-                                    ui.add_space(20.0);
-                                    ui.vertical_centered(|ui| {
-                                        ui.label(
-                                            egui::RichText::new("ACTION")
-                                                .size(11.0)
-                                                .strong()
-                                                .color(palette.secondary_text),
-                                        );
-                                    });
-
-                                    ui.add_enabled_ui(!running, |ui| {
-                                        ui.spacing_mut().item_spacing.x += 5.0;
-                                        ui.vertical_centered(|ui| {
-                                            ui.horizontal_wrapped(|ui| {
-                                                let selected = self.selected_action;
-                                                ui.radio_value(
-                                                    &mut self.selected_action,
-                                                    PowerAction::Shutdown,
-                                                    egui::RichText::new("SHUT DOWN").color(
-                                                        if selected == PowerAction::Shutdown {
-                                                            palette.accent
-                                                        } else {
-                                                            palette.secondary_text
-                                                        },
-                                                    ),
-                                                );
-                                                let selected = self.selected_action;
-                                                ui.radio_value(
-                                                    &mut self.selected_action,
-                                                    PowerAction::Sleep,
-                                                    egui::RichText::new("SLEEP").color(
-                                                        if selected == PowerAction::Sleep {
-                                                            palette.accent
-                                                        } else {
-                                                            palette.secondary_text
-                                                        },
-                                                    ),
-                                                );
-                                                let selected = self.selected_action;
-                                                ui.radio_value(
-                                                    &mut self.selected_action,
-                                                    PowerAction::SignOut,
-                                                    egui::RichText::new("SIGN OUT").color(
-                                                        if selected == PowerAction::SignOut {
-                                                            palette.accent
-                                                        } else {
-                                                            palette.secondary_text
-                                                        },
-                                                    ),
-                                                );
-                                                let selected = self.selected_action;
-                                                ui.radio_value(
-                                                    &mut self.selected_action,
-                                                    PowerAction::Restart,
-                                                    egui::RichText::new("RESTART").color(
-                                                        if selected == PowerAction::Restart {
-                                                            palette.accent
-                                                        } else {
-                                                            palette.secondary_text
-                                                        },
-                                                    ),
-                                                );
-                                            });
-                                        });
-                                    });
-
-                                    if let Some(message) = &self.status_message {
-                                        ui.add_space(16.0);
-                                        ui.label(
-                                            egui::RichText::new(message)
-                                                .size(11.0)
-                                                .color(if self.status_is_error { palette.error_text } else { palette.secondary_text }),
-                                        );
-                                    }
-
-                                    if let Some(error) = &self.settings_save_error {
-                                        ui.add_space(if self.status_message.is_some() { 4.0 } else { 16.0 });
-                                        ui.label(
-                                            egui::RichText::new(error)
-                                                .size(11.0)
-                                                .color(palette.error_text),
-                                        );
-                                    }
+                                        ),
+                                    );
+                                    let selected = self.selected_action;
+                                    ui.radio_value(
+                                        &mut self.selected_action,
+                                        PowerAction::Restart,
+                                        egui::RichText::new("RESTART").color(
+                                            if selected == PowerAction::Restart {
+                                                palette.accent
+                                            } else {
+                                                palette.secondary_text
+                                            },
+                                        ),
+                                    );
                                 });
+                            });
+                        });
+
+                        if let Some(message) = &self.status_message {
+                            ui.add_space(16.0);
+                            ui.label(egui::RichText::new(message).size(11.0).color(
+                                if self.status_is_error {
+                                    palette.error_text
+                                } else {
+                                    palette.secondary_text
+                                },
+                            ));
+                        }
+
+                        if let Some(error) = &self.settings_save_error {
+                            ui.add_space(if self.status_message.is_some() {
+                                4.0
+                            } else {
+                                16.0
+                            });
+                            ui.label(
+                                egui::RichText::new(error)
+                                    .size(11.0)
+                                    .color(palette.error_text),
+                            );
+                        }
+                    });
 
                 ui.advance_cursor_after_rect(cards_rect);
 
                 let enter_pressed = ui.input(|input| input.key_pressed(egui::Key::Enter));
-                if enter_pressed && timer_input_has_focus && !self.is_running() && !self.custom_dialog_open {
+                if enter_pressed
+                    && timer_input_has_focus
+                    && !self.is_running()
+                    && !self.custom_dialog_open
+                {
                     self.start_timer();
                 }
             });
@@ -1532,7 +1672,11 @@ fn draw_menu_toggle(
     let control_font = egui::FontId::proportional(menu_font.size * CONTROL_SCALE);
     let label_width = ui
         .painter()
-        .layout_no_wrap(label.to_owned(), control_font.clone(), palette.secondary_text)
+        .layout_no_wrap(
+            label.to_owned(),
+            control_font.clone(),
+            palette.secondary_text,
+        )
         .size()
         .x;
 
@@ -1564,9 +1708,21 @@ fn draw_menu_toggle(
 
     // Draw a pill-shaped track and a separate sliding thumb: this is a real
     // toggle switch, not a rectangular push button.
-    let track_fill = if enabled { palette.accent } else { palette.surface_background };
-    let thumb_fill = if enabled { palette.contrast_background } else { palette.accent };
-    let text_color = if enabled { palette.contrast_background } else { palette.primary_text };
+    let track_fill = if enabled {
+        palette.accent
+    } else {
+        palette.surface_background
+    };
+    let thumb_fill = if enabled {
+        palette.contrast_background
+    } else {
+        palette.accent
+    };
+    let text_color = if enabled {
+        palette.contrast_background
+    } else {
+        palette.primary_text
+    };
     let painter = content_ui.painter();
     painter.rect_filled(
         switch_rect,
@@ -1617,8 +1773,13 @@ fn create_offtimer_tray_icon(ctx: &egui::Context) -> Result<tray_icon::TrayIcon,
     TrayIconEvent::set_event_handler(Some(move |event| {
         let restore = matches!(
             event,
-            TrayIconEvent::Click { button: MouseButton::Left, .. }
-                | TrayIconEvent::DoubleClick { button: MouseButton::Left, .. }
+            TrayIconEvent::Click {
+                button: MouseButton::Left,
+                ..
+            } | TrayIconEvent::DoubleClick {
+                button: MouseButton::Left,
+                ..
+            }
         );
 
         if restore {
@@ -1649,8 +1810,8 @@ fn parse_optional_number(value: &str) -> Result<u64, String> {
 }
 
 fn parse_duration(hours: &str, minutes: &str) -> Result<Duration, String> {
-    let hours = parse_optional_number(hours)
-        .map_err(|_| "Enter a whole number of hours.".to_owned())?;
+    let hours =
+        parse_optional_number(hours).map_err(|_| "Enter a whole number of hours.".to_owned())?;
     let minutes = parse_optional_number(minutes)
         .map_err(|_| "Enter a whole number of minutes.".to_owned())?;
 
@@ -1677,7 +1838,6 @@ fn format_custom_label(hours: u64, minutes: u64) -> String {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1697,15 +1857,39 @@ mod tests {
     #[test]
     fn default_theme_preserves_original_palette_values_and_widget_defaults() {
         let palette = Theme::Default.palette();
-        assert_eq!(palette.main_background, egui::Color32::from_rgb(0x00, 0x00, 0x00));
-        assert_eq!(palette.surface_background, egui::Color32::from_rgb(0x47, 0x47, 0x47));
-        assert_eq!(palette.contrast_background, egui::Color32::from_rgb(0x00, 0x00, 0x00));
-        assert_eq!(palette.secondary_text, egui::Color32::from_rgb(0x87, 0x87, 0x87));
+        assert_eq!(
+            palette.main_background,
+            egui::Color32::from_rgb(0x00, 0x00, 0x00)
+        );
+        assert_eq!(
+            palette.surface_background,
+            egui::Color32::from_rgb(0x47, 0x47, 0x47)
+        );
+        assert_eq!(
+            palette.contrast_background,
+            egui::Color32::from_rgb(0x00, 0x00, 0x00)
+        );
+        assert_eq!(
+            palette.secondary_text,
+            egui::Color32::from_rgb(0x87, 0x87, 0x87)
+        );
         assert_eq!(palette.accent, egui::Color32::from_rgb(0xf5, 0xf5, 0xf5));
-        assert_eq!(palette.control_background, egui::Color32::from_rgb(0xb5, 0xb5, 0xb5));
-        assert_eq!(palette.primary_text, egui::Color32::from_rgb(0xff, 0xff, 0xff));
-        assert_eq!(palette.selection_background, egui::Color32::from_rgb(0x21, 0x21, 0x21));
-        assert_eq!(palette.error_text, egui::Color32::from_rgb(0xff, 0x8b, 0x8b));
+        assert_eq!(
+            palette.control_background,
+            egui::Color32::from_rgb(0xb5, 0xb5, 0xb5)
+        );
+        assert_eq!(
+            palette.primary_text,
+            egui::Color32::from_rgb(0xff, 0xff, 0xff)
+        );
+        assert_eq!(
+            palette.selection_background,
+            egui::Color32::from_rgb(0x21, 0x21, 0x21)
+        );
+        assert_eq!(
+            palette.error_text,
+            egui::Color32::from_rgb(0xff, 0x8b, 0x8b)
+        );
         assert!(palette.button_corner_radius.is_none());
         assert!(palette.control_border.is_none());
         assert!(palette.window_border.is_none());
@@ -1717,9 +1901,15 @@ mod tests {
     fn red_moon_and_classic_have_distinct_widget_shapes() {
         let red_moon = Theme::RedMoon.palette();
         let classic = Theme::WindowsClassic.palette();
-        assert_eq!(red_moon.main_background, egui::Color32::from_rgb(0x12, 0x0c, 0x11));
+        assert_eq!(
+            red_moon.main_background,
+            egui::Color32::from_rgb(0x12, 0x0c, 0x11)
+        );
         assert_eq!(red_moon.accent, egui::Color32::from_rgb(0xe0, 0x4b, 0x68));
-        assert_eq!(red_moon.button_corner_radius, Some(egui::CornerRadius::same(8)));
+        assert_eq!(
+            red_moon.button_corner_radius,
+            Some(egui::CornerRadius::same(8))
+        );
         assert_eq!(red_moon.card_corner_radius, egui::CornerRadius::same(14));
         assert!(red_moon.control_border.is_some());
         assert!(red_moon.use_dark_visuals);
@@ -1737,7 +1927,10 @@ mod tests {
 
     #[test]
     fn parses_valid_duration() {
-        assert_eq!(parse_duration("1", "30").unwrap(), Duration::from_secs(5_400));
+        assert_eq!(
+            parse_duration("1", "30").unwrap(),
+            Duration::from_secs(5_400)
+        );
         assert_eq!(parse_duration("0", "10").unwrap(), Duration::from_secs(600));
     }
 

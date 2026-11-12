@@ -1,5 +1,8 @@
 use crate::actions::PowerAction;
-use std::{env, fs, path::{Path, PathBuf}};
+use std::{
+    env, fs,
+    path::{Path, PathBuf},
+};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AppSettings {
@@ -89,10 +92,18 @@ impl AppSettings {
         if let Some(value) = json_value_for_key(input, "theme") {
             let theme = parse_json_string(value)
                 .ok_or_else(|| "The theme setting must be a JSON string.".to_owned())?;
-            if !matches!(theme, "default" | "midnight" | "light" | "red_moon" | "windows_xp" | "windows_classic") {
+            if !matches!(
+                theme,
+                "default" | "midnight" | "light" | "red_moon" | "windows_xp" | "windows_classic"
+            ) {
                 return Err("The theme setting is not recognized.".to_owned());
             }
-            settings.theme = if theme == "windows_xp" { "red_moon" } else { theme }.to_owned();
+            settings.theme = if theme == "windows_xp" {
+                "red_moon"
+            } else {
+                theme
+            }
+            .to_owned();
         }
 
         if let Some(value) = json_value_for_key(input, "custom_duration") {
@@ -103,7 +114,9 @@ impl AppSettings {
             let entries = json_array_items(value)
                 .ok_or_else(|| "The quick preset settings must be a JSON array.".to_owned())?;
             if entries.len() != 4 {
-                return Err("The quick preset settings must contain exactly four entries.".to_owned());
+                return Err(
+                    "The quick preset settings must contain exactly four entries.".to_owned(),
+                );
             }
 
             for (index, entry) in entries.iter().enumerate() {
@@ -178,8 +191,9 @@ fn settings_file_path() -> Result<PathBuf, String> {
 fn settings_directory() -> Result<PathBuf, String> {
     #[cfg(windows)]
     {
-        let app_data = env::var_os("APPDATA")
-            .ok_or_else(|| "Could not locate the Windows roaming AppData folder (APPDATA).".to_owned())?;
+        let app_data = env::var_os("APPDATA").ok_or_else(|| {
+            "Could not locate the Windows roaming AppData folder (APPDATA).".to_owned()
+        })?;
         Ok(PathBuf::from(app_data).join("OffTimer"))
     }
 
@@ -221,13 +235,9 @@ fn remove_legacy_settings_file_if_valid(legacy_path: &Path, current_path: &Path)
 }
 
 fn is_offtimer_settings(contents: &str) -> bool {
-    let has_offtimer_keys = [
-        "use_24_hour_clock",
-        "close_to_tray",
-        "selected_action",
-    ]
-    .iter()
-    .all(|key| json_value_for_key(contents, key).is_some());
+    let has_offtimer_keys = ["use_24_hour_clock", "close_to_tray", "selected_action"]
+        .iter()
+        .all(|key| json_value_for_key(contents, key).is_some());
 
     has_offtimer_keys && AppSettings::from_json(contents).is_ok()
 }
@@ -353,7 +363,9 @@ fn json_value_for_key<'a>(json: &'a str, key: &str) -> Option<&'a str> {
         None
     } else {
         let end = after_colon
-            .find(|character: char| character == ',' || character == '}' || character.is_whitespace())
+            .find(|character: char| {
+                character == ',' || character == '}' || character.is_whitespace()
+            })
             .unwrap_or(after_colon.len());
         Some(&after_colon[..end])
     }
@@ -415,7 +427,10 @@ mod tests {
             quick_preset_custom_durations: [Some((0, 15)), None, Some((5, 0)), Some((1, 45))],
         };
 
-        assert_eq!(AppSettings::from_json(&settings.to_json()).unwrap(), settings);
+        assert_eq!(
+            AppSettings::from_json(&settings.to_json()).unwrap(),
+            settings
+        );
     }
 
     #[test]
@@ -486,5 +501,4 @@ mod tests {
 
         assert!(!legacy_path.exists());
     }
-
 }

@@ -1,4 +1,6 @@
-# OffTimer
+[![Rust](https://img.shields.io/badge/built%20with-Rust-orange)](https://www.rust-lang.org/)
+[![Downloads](https://img.shields.io/github/downloads/Amel-Okicic/OffTimer/total?label=downloads)](https://github.com/Amel-Okicic/OffTimer/releases)
+[![Donate with PayPal](https://img.shields.io/badge/Donate-PayPal-00457C?style=flat&logo=paypal&logoColor=white)](https://paypal.me/AmelOkicic)
 
 **OffTimer** is a lightweight Windows desktop application for scheduling automatic shutdown, sleep, sign-out, and restart.
 
